@@ -13,7 +13,7 @@ namespace BotecoTDS08
 {
     public partial class FrmVenda : Form
     {
-        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\boteco-main\DbBoteco.mdf;Integrated Security=True");
+        SqlConnection con = new SqlConnection(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=C:\boteco\DbBoteco.mdf;Integrated Security=True");
 
         public FrmVenda()
         {
@@ -262,7 +262,7 @@ namespace BotecoTDS08
             MessageBox.Show("Pedido realizado com sucesso!", "Pedido", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void btnlocalizarpedidovenda_Click(object sender, EventArgs e)
         {
             CarregaCbxProduto();
             txtTotal.Text = "";
@@ -271,20 +271,107 @@ namespace BotecoTDS08
             con.Open();
             try
             {
-
                 SqlCommand cmd = new SqlCommand("VendaId", con);
-                cmd.Parameters.AddWithValue("@Id", SqlDType.Int).Value = Convert.ToInt32(txtPedido.Text.Trim());
+                cmd.Parameters.AddWithValue("@Id", SqlDbType.Int).Value = Convert.ToInt32(txtIdPedido.Text.Trim());
                 cmd.CommandType = CommandType.StoredProcedure;
                 SqlDataAdapter da = new SqlDataAdapter(cmd);
                 DataTable dt = new DataTable();
                 da.Fill(dt);
-
-                
+                string venda = dt.Rows[0]["situacao"].ToString();
+                int linhas = dt.Rows.Count;
+                if (linhas > 0 && venda == "aberta")
+                {
+                    con.Close();
+                    con.Open();
+                    SqlCommand pedido = new SqlCommand("localizarpedido", con);
+                    pedido.Parameters.AddWithValue("@Id", SqlDbType.Int).Value = Convert.ToInt32(txtIdPedido.Text.Trim());
+                    pedido.CommandType = CommandType.StoredProcedure;
+                    SqlDataAdapter ped = new SqlDataAdapter(pedido);
+                    DataTable dtped = new DataTable();
+                    ped.Fill(dtped);
+                    int linhasped = dtped.Rows.Count;
+                    if (linhasped > 0)
+                    {
+                        cbxCliente.Enabled = true;
+                        cbxCliente.Text = "";
+                        cbxCliente.Text = dtped.Rows[0]["nomecliente"].ToString();
+                        txtTotal.Text = dtped.Rows[0]["total"].ToString();
+                        cbxProduto.Enabled = true;
+                        txtQuantidade.Enabled = true;
+                        txtValor.Enabled = true;
+                        btnNovoItem.Enabled = true;
+                        btnEditarItem.Enabled = true;
+                        btnExcluirItem.Enabled = true;
+                        btnFinalizarVenda.Enabled = true;
+                        btnNovoPedido.Enabled = false;
+                        btnAtualizarPedido.Enabled = true;
+                        dgvPedido.Columns.Add("ID", "ID");
+                        dgvPedido.Columns.Add("Produto", "Produto");
+                        dgvPedido.Columns.Add("Quantidade", "Quantidade");
+                        dgvPedido.Columns.Add("Valor", "Valor");
+                        dgvPedido.Columns.Add("Total", "Total");
+                        for (int i = 0; i < linhasped; i++)
+                        {
+                            DataGridViewRow itemped = new DataGridViewRow();
+                            itemped.CreateCells(dgvPedido);
+                            itemped.Cells[0].Value = dtped.Rows[i]["id_produto"].ToString();
+                            itemped.Cells[1].Value = dtped.Rows[i]["nomeproduto"].ToString();
+                            itemped.Cells[2].Value = dtped.Rows[i]["quantidade"].ToString();
+                            itemped.Cells[3].Value = dtped.Rows[i]["valor_unitario"].ToString();
+                            itemped.Cells[4].Value = dtped.Rows[i]["valor_total"].ToString();
+                            dgvPedido.Rows.Add(itemped);
+                        }
+                    }
+                }
+                else
+                {
+                    con.Close();
+                    con.Open();
+                    SqlCommand lvenda = new SqlCommand("localizarvendido", con);
+                    lvenda.Parameters.AddWithValue("@Id", SqlDbType.Int).Value = Convert.ToInt32(txtIdPedido.Text.Trim());
+                    lvenda.CommandType = CommandType.StoredProcedure;
+                    SqlDataAdapter ven = new SqlDataAdapter(lvenda);
+                    DataTable dtven = new DataTable();
+                    ven.Fill(dtven);
+                    int linhasven = dtven.Rows.Count;
+                    if (linhasven > 0)
+                    {
+                        cbxCliente.Enabled = true;
+                        cbxCliente.Text = "";
+                        cbxCliente.Text = dtven.Rows[0]["nomecliente"].ToString();
+                        txtTotal.Text = dtven.Rows[0]["total"].ToString();
+                        cbxProduto.Enabled = true;
+                        txtQuantidade.Enabled = true;
+                        txtValor.Enabled = true;
+                        btnNovoItem.Enabled = true;
+                        btnEditarItem.Enabled = true;
+                        btnExcluirItem.Enabled = true;
+                        btnFinalizarVenda.Enabled = true;
+                        btnNovoPedido.Enabled = false;
+                        btnAtualizarPedido.Enabled = true;
+                        dgvPedido.Columns.Add("ID", "ID");
+                        dgvPedido.Columns.Add("Produto", "Produto");
+                        dgvPedido.Columns.Add("Quantidade", "Quantidade");
+                        dgvPedido.Columns.Add("Valor", "Valor");
+                        dgvPedido.Columns.Add("Total", "Total");
+                        for (int i = 0; i < linhasven; i++)
+                        {
+                            DataGridViewRow itemven = new DataGridViewRow();
+                            itemven.CreateCells(dgvPedido);
+                            itemven.Cells[0].Value = dtven.Rows[i]["id_produto"].ToString();
+                            itemven.Cells[1].Value = dtven.Rows[i]["nomeproduto"].ToString();
+                            itemven.Cells[2].Value = dtven.Rows[i]["quantidade"].ToString();
+                            itemven.Cells[3].Value = dtven.Rows[i]["valor_unitario"].ToString();
+                            itemven.Cells[4].Value = dtven.Rows[i]["valor_total"].ToString();
+                            dgvPedido.Rows.Add(itemven);
+                        }
+                    }
+                }
             }
             catch (Exception)
             {
 
-                MessageBox.Show("Nenhum pedido ou venda localizado!","Não localizador!" MessageBoxButtons.OK,MessageBoxIcon.Error);
+                MessageBox.Show("Nenhum pedido ou venda localizado!", "Nao localizado!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             con.Close();
         }
